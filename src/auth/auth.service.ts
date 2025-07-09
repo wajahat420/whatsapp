@@ -27,7 +27,21 @@ export class AuthService {
     }
 
     async register(register: RegisterDTO) {
+        const data = await this.userModel.create({
+            email: register.email,
+            password: register.password,
+            name: register.name
+        })
 
+        if (!data) {
+            console.error('Registration failed for user:', register.email);
+
+            throwError({
+                message: 'email or password is incorrect'
+            })
+        }
+
+        return data
     }
 
 }

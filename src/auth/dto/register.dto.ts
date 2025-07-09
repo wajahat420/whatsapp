@@ -7,4 +7,7 @@ export class RegisterDTO {
 
     @IsNotEmpty()
     password: string;
+
+    @IsNotEmpty()
+    name: string;
 }
