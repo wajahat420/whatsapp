@@ -1,5 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
+import { WinstonLogger } from './logger/winston-logger.service';
 import { AllExceptionsFilter } from './middleware/exception-handling';
 
 async function bootstrap() {
@@ -14,7 +15,10 @@ async function bootstrap() {
         credentials: true,
     })
 
-    app.useGlobalFilters(new AllExceptionsFilter());
+    const logger = app.get(WinstonLogger);
+    app.useLogger(logger);
+
+    app.useGlobalFilters(new AllExceptionsFilter(logger));
 
     await app.listen(5000);
 }
