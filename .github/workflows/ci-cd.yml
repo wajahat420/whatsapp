@@ -1,0 +1,45 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm test
+
+      - name: Build project
+        run: npm run build
+
+      - name: Deploy to EC2
+        run: |
+          echo "${{ secrets.SSH_KEY }}" > key.pem
+          chmod 600 key.pem
+
+          # Upload dist/ folder to EC2 target directory
+          scp -i key.pem -o StrictHostKeyChecking=no -r ./dist ec2-user@13.203.249.84:/home/ec2-user/whatsapp-backend
+
+          # Restart or start the app using PM2
+          ssh -i key.pem -o StrictHostKeyChecking=no ec2-user@13.203.249.84 << 'EOF'
+            cd /home/ec2-user/whatsapp-backend
+            pm2 restart whatsapp-backend || pm2 start dist/main.js --name whatsapp-backend
+          EOF
